@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import axios from "axios";
 
 function App() {
@@ -27,8 +28,8 @@ function App() {
     setLoading(false);
   };
 
-  const handleChange = (e) => {
-    let value = e.target.value;
+  const handleChange = (event) => {
+    let value = event.target.value;
     if (!value.startsWith("https://")) {
       value = "https://" + value;
     }
