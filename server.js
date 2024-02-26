@@ -1,17 +1,27 @@
 const express = require("express");
 const axios = require("axios");
 const cheerio = require("cheerio");
+const dotenv = require("dotenv");
 const urlModule = require("url");
-const PORT = process.env.PORT || 5000;
+const path = require("path");
 const cors = require("cors");
-// Use the cors middleware
-const app = express();
 
-app.use(cors());
-// Middleware to parse JSON bodies
+const PORT = process.env.PORT || 5000;
+
+const app = express();
 app.use(express.json());
 
-// Function to scrape website links
+app.use(cors());
+
+dotenv.config();
+
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "./client/dist")));
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "./", "client", "dist", "index.html"));
+  });
+}
+
 async function scrapeWebsite(url) {
   try {
     const response = await axios.get(url);
