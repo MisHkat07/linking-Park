@@ -15,7 +15,7 @@ function App() {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/scrape-links",
+        "https://link-scrap-backend.vercel.app/api/scrape-links",
         { websiteLink }
       );
       setInternalLinks(response.data.internal);
