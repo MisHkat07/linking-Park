@@ -14,7 +14,7 @@ const URLChecker = () => {
     setErrMsg("");
     try {
       const response = await axios.get(
-        `http://localhost:8000/api/check-url?url=${url}&website=${website}`
+        `https://link-scrap-backend.vercel.app/api/check-url?url=${url}&website=${website}`
       );
       setResult(response.data);
     } catch (error) {
