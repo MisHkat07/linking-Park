@@ -9,12 +9,16 @@ const URLChecker = () => {
   const [loading, setLoading] = useState(false);
   const [errMsg, setErrMsg] = useState("");
   const handleSubmit = async (e) => {
-    setLoading(true);
     e.preventDefault();
+    setLoading(true);
     setErrMsg("");
     try {
-      const response = await axios.get(
-        `https://link-scrap-backend.vercel.app/api/check-url?url=${url}&website=${website}`
+      const response = await axios.post(
+        "https://link-scrap-backend.vercel.app/api/check-url",
+        {
+          website,
+          url,
+        }
       );
       setResult(response.data);
     } catch (error) {
@@ -36,14 +40,14 @@ const URLChecker = () => {
           type="text"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="Enter Website"
+          placeholder="Enter Url"
           className="border border-gray-300 rounded-l-md px-2 py-2 w-full sm:w-auto focus:outline-none focus:border-blue-500"
         />
         <input
           type="text"
           value={website}
           onChange={(e) => setWebsite(e.target.value)}
-          placeholder="Enter URL"
+          placeholder="Enter Website"
           className="border border-gray-300 rounded-r-md px-2 py-2 w-full sm:w-auto focus:outline-none focus:border-blue-500"
         />
         <button
@@ -58,6 +62,7 @@ const URLChecker = () => {
       )}
       {result && (
         <div>
+          <h4 className="text-red-500 my-4 overflow-hidden">{result.error ? result.error : ""}</h4>
           <p>URL exists: {result.exists.toString()}</p>
           {result.exists && (
             <div>
