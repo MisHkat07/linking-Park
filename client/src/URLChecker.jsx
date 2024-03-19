@@ -13,13 +13,10 @@ const URLChecker = () => {
     setLoading(true);
     setErrMsg("");
     try {
-      const response = await axios.post(
-        "https://link-scrap-backend.vercel.app/api/check-url",
-        {
-          website,
-          url,
-        }
-      );
+      const response = await axios.post("http://localhost:8000/api/check-url", {
+        website,
+        url,
+      });
       setResult(response.data);
     } catch (error) {
       console.error(error);
