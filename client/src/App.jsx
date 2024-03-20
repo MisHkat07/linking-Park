@@ -81,13 +81,16 @@ function App() {
     };
 
     try {
-      const response = await fetch("https://link-scrap-backend.vercel.app/api/scrape-links", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await fetch(
+        "https://link-scrap-backend.vercel.app/api/scrape-links",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
       if (response.ok) {
         const data = await response.json();
         const {
@@ -107,7 +110,14 @@ function App() {
         setUrls(allUrls);
       } else {
         setUrls([]);
-        setRedirectError(`${response.status} : ${response.statusText}`);
+        console.log("🎯 response:", response);
+        setRedirectError(
+          `${response.status} : ${
+            response.statusText || response.status === 308
+              ? "Permanent Redirect"
+              : "Not Found"
+          }`
+        );
       }
     } catch (error) {
       console.error("Error submitting form:", error);
