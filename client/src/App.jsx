@@ -1,4 +1,3 @@
-import axios from "axios";
 import React, { useState } from "react";
 
 const isValidURL = (url) => {
@@ -36,7 +35,7 @@ function App() {
   const [urls, setUrls] = useState([]);
   const [externalURL, setExternalURL] = useState("");
   const [desiredURLError, setDesiredURLError] = useState(false);
-  const [externalURLError, setExternalURLError] = useState(false);
+  const [externalURLError, setExternalURLError] = useState("");
   const [redirectError, setRedirectError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -48,7 +47,7 @@ function App() {
     setShowExternalWebsite(e.target.checked);
     if (!e.target.checked) {
       setExternalURL("");
-      setExternalURLError(false);
+      setExternalURLError("");
     }
   };
 
@@ -61,7 +60,7 @@ function App() {
 
   const handleExternalURLChange = (e) => {
     setExternalURL(e.target.value);
-    setExternalURLError(!isValidURL(e.target.value));
+    !isValidURL(e.target.value) && setExternalURLError("Enter a valid URL");
   };
 
   const isSubmitDisabled =
@@ -73,7 +72,11 @@ function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true); // Set loading state to true
+
+    setExternalURLError("");
+    setIsLoading(true);
+    setUrls([]);
+
     const formData = {
       desiredURL,
       option,
@@ -93,24 +96,30 @@ function App() {
       );
       if (response.ok) {
         const data = await response.json();
-        const {
-          title,
-          rootLink,
-          internalLinks,
-          externalLinks,
-          metaLinks,
-          crawledPages,
-        } = data;
-        let allUrls = [
-          { title, rootLink, internalLinks, externalLinks, metaLinks },
-        ];
-        if (crawledPages && crawledPages.length > 0) {
-          allUrls = [...allUrls, ...crawledPages];
+        if (data.title) {
+          const {
+            title,
+            rootLink,
+            internalLinks,
+            externalLinks,
+            metaLinks,
+            crawledPages,
+          } = data;
+          let allUrls = [
+            { title, rootLink, internalLinks, externalLinks, metaLinks },
+          ];
+          if (crawledPages && crawledPages.length > 0) {
+            allUrls = [...allUrls, ...crawledPages];
+          }
+          setUrls(allUrls);
+        } else if (!data.title && data[0].linkFinder) {
+          setUrls(data);
+        } else {
+          setExternalURLError("Not Found");
         }
-        setUrls(allUrls);
       } else {
         setUrls([]);
-        console.log("🎯 response:", response);
+        console.log(response);
         setRedirectError(
           `${response.status} : ${
             response.statusText || response.status === 308
@@ -122,9 +131,10 @@ function App() {
     } catch (error) {
       console.error("Error submitting form:", error);
     } finally {
-      setIsLoading(false); // Set loading state to false
+      setIsLoading(false);
     }
   };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white rounded-lg shadow-lg p-8 max-w-4xl">
@@ -194,11 +204,11 @@ function App() {
                 className="mr-2 form-checkbox text-indigo-600 focus:ring-indigo-500"
               />
               <label htmlFor="externalWebsite" className="text-gray-700">
-                Look into External Website
+                Look for specific URL
               </label>
             </div>
           )}
-          {showExternalWebsite && (
+          {option !== "singlePage" && showExternalWebsite && (
             <div className="mb-4">
               <input
                 type="text"
@@ -212,7 +222,7 @@ function App() {
                 } rounded-lg p-2 transition-colors duration-300`}
               />
               {externalURLError && (
-                <p className="text-red-500 mt-1">Please enter a valid URL</p>
+                <p className="text-red-500 mt-1">{externalURLError}</p>
               )}
             </div>
           )}
@@ -237,62 +247,77 @@ function App() {
         )}
         {urls.length > 0 && !isLoading && (
           <div className="mt-8">
-            {urls.map((url, index) => (
-              <div
-                key={index}
-                className="mb-8 border border-gray-300 rounded-md p-3"
-              >
-                <h3 className="text-lg font-semibold text-gray-800">
-                  {index + 1}. {url.title}
-                </h3>
-                <a
-                  href={url.rootLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block max-w-full"
+            {urls.map((url, index) =>
+              url?.linkFinder ? (
+                <div key={index} className="w-full pr-2 mb-4 md:mb-0">
+                  <h4 className="text-md font-semibold text-gray-500 mb-2">
+                    Found In:
+                  </h4>
+                  <ul className="text-sm text-gray-600 leading-relaxed">
+                    {url.rootLinks?.map((link, i) => (
+                      <li key={i} className="break-all text-blue-600">
+                        {i + 1}. {link}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <div
+                  key={index}
+                  className="mb-8 border border-gray-300 rounded-md p-3"
                 >
-                  ( {url.rootLink} )
-                </a>
-                <div className="flex flex-col md:flex-row mt-4">
-                  <div className="w-full md:w-1/3 pr-2 mb-4 md:mb-0">
-                    <h4 className="text-md font-semibold text-gray-500 mb-2">
-                      Internal Links
-                    </h4>
-                    <ul className="text-sm text-gray-600 leading-relaxed">
-                      {url.internalLinks.map((link, i) => (
-                        <li key={i} className="break-all text-blue-600">
-                          {i + 1}. {link}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="w-full md:w-1/3 px-2 mb-4 md:mb-0">
-                    <h4 className="text-md font-semibold text-gray-500 mb-2">
-                      External Links
-                    </h4>
-                    <ul className="text-sm text-gray-600 leading-relaxed">
-                      {url.externalLinks.map((link, i) => (
-                        <li key={i} className="break-all text-green-500">
-                          {i + 1}. {link}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="w-full md:w-1/3 pl-2">
-                    <h4 className="text-md font-semibold text-gray-500 mb-2">
-                      Meta & Asset Links
-                    </h4>
-                    <ul className="text-sm text-gray-600 leading-relaxed">
-                      {url.metaLinks.map((link, i) => (
-                        <li key={i} className="break-all text-purple-600">
-                          {i + 1}. {link}
-                        </li>
-                      ))}
-                    </ul>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    {index + 1}. {url.title}
+                  </h3>
+                  <a
+                    href={url.rootLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block max-w-full"
+                  >
+                    ( {url.rootLink} )
+                  </a>
+                  <div className="flex flex-col md:flex-row mt-4">
+                    <div className="w-full md:w-1/3 pr-2 mb-4 md:mb-0">
+                      <h4 className="text-md font-semibold text-gray-500 mb-2">
+                        Internal Links
+                      </h4>
+                      <ul className="text-sm text-gray-600 leading-relaxed">
+                        {url.internalLinks?.map((link, i) => (
+                          <li key={i} className="break-all text-blue-600">
+                            {i + 1}. {link}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="w-full md:w-1/3 px-2 mb-4 md:mb-0">
+                      <h4 className="text-md font-semibold text-gray-500 mb-2">
+                        External Links
+                      </h4>
+                      <ul className="text-sm text-gray-600 leading-relaxed">
+                        {url.externalLinks?.map((link, i) => (
+                          <li key={i} className="break-all text-green-500">
+                            {i + 1}. {link}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="w-full md:w-1/3 pl-2">
+                      <h4 className="text-md font-semibold text-gray-500 mb-2">
+                        Meta & Asset Links
+                      </h4>
+                      <ul className="text-sm text-gray-600 leading-relaxed">
+                        {url.metaLinks?.map((link, i) => (
+                          <li key={i} className="break-all text-purple-600">
+                            {i + 1}. {link}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            )}
           </div>
         )}
       </div>

@@ -12,6 +12,7 @@ const URLChecker = () => {
     e.preventDefault();
     setLoading(true);
     setErrMsg("");
+    "https://link-scrap-backend.vercel.app/api/scrape-links",
     try {
       const response = await axios.post("http://localhost:8000/api/check-url", {
         website,
